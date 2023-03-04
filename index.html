@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Crypto Tracker</title>
+  <style>
+    body {
+  background-color: #0f0f0f;
+  color: #fff;
+  font-family: sans-serif;
+}
+
+.container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 2px solid #333;
+  border-radius: 5px;
+  box-shadow: 0px 0px 5px 0px #333;
+  margin: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+input[type="number"] {
+  width: 200px;
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+  margin-bottom: 20px;
+}
+input[type="text"] {
+  width: 200px;
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+  margin-bottom: 20px;
+}
+
+button[type="submit"] {
+  background-color: #333;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button[type="submit"]:hover {
+  background-color: #555;
+}
+
+.result {
+  margin-top: 20px;
+  border-top: 2px solid #333;
+  padding-top: 20px;
+  font-size: 1.2em;
+}
+
+.result p {
+  margin: 0;
+}
+
+.result span {
+  font-weight: bold;
+}
+
+
+.table-container {
+    border-radius: 10px;
+  overflow-x: auto;
+  margin-top: 20px;
+  max-width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 600px; /* adjust as needed */
+}
+
+th,
+td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #333;
+  color: #fff;
+  font-weight: bold;
+}
+
+
+tr:nth-child(even) {
+  background-color: #474646;
+}
+
+tr:hover {
+  background-color: #797878;
+}
+
+
+
+
+</style>
+
+</head>
+<body>
+  <h1>Crypto Tracker</h1>
+<div>
+    <div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Currency</th>
+        <th>Amount Owned</th>
+        <th>Current Price</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td id="totalValue"></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<div class="form-container">
+  <form id="crypto-form">
+    <label for="token-input">Token:</label>
+    <input id="token" type="text">
+    <br>
+    <label for="token-input">Amount:</label>
+    <input type="number" id="token-input" min="0" step="0.00000001">
+    <br>
+    <button type="submit">Submit</button>
+  </form>
+</div></div>
+<script>
+    let totalValue = Number(0)
+    const addNewToken = () => {
+      let token = document.getElementById('token').value
+      let quantity = document.getElementById('token-input').value
+
+      let item = localStorage.getItem("tokenArray")
+      let tokenArray = JSON.parse(item)
+      if (tokenArray) {
+        tokenArray.push([token, quantity])
+      } else {
+        tokenArray = [[token, quantity]]
+      }
+      localStorage.setItem('tokenArray', JSON.stringify(tokenArray))
+      updateCryptoValues([token, quantity])
+    };
+
+    const updateCryptoValues = async (element) => {
+      let token = element[0]
+      let quantity = element[1]
+      const tokenResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${token}&vs_currencies=usd`);
+      const tokenData = await tokenResponse.json();
+      let price = tokenData[token].usd.toFixed(2)
+      let value = (quantity * price).toFixed(2)
+      totalValue = Number(totalValue) + Number(value)
+      let table = document.querySelector('table')
+      let newRow = document.createElement('tr')
+      newRow.innerHTML = `<td>${token.toUpperCase()}</td>${quantity}<td>${price}</td><td>${value}</td>`
+      table.appendChild(newRow)
+      document.getElementById('totalValue').innerHTML = totalValue.toFixed(2)
+    };
+
+    const handleFormSubmit = (event) => {
+      event.preventDefault();
+      addNewToken();
+    };
+
+    const init = () => {
+      let portfolio = JSON.parse(localStorage.getItem("tokenArray"))
+      if (portfolio) {
+        portfolio.forEach( element => updateCryptoValues(element))
+      }
+    };
+
+    init();
+    document.getElementById('crypto-form').addEventListener('submit', handleFormSubmit);
+  </script>
+
+</body>
+</html>
